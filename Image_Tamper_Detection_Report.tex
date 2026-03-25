@@ -1,0 +1,724 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+
+% Page setup
+\geometry{margin=1in}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\fancyfoot[C]{Image Tamper Detection}
+
+% Code listing setup
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    showstringspaces=false
+}
+
+% Title formatting
+\titleformat{\section}
+{\Large\bfseries\color{blue!70!black}}
+{\thesection}{1em}{}
+
+\titleformat{\subsection}
+{\large\bfseries\color{blue!50!black}}
+{\thesubsection}{1em}{}
+
+% Title page
+\title{\textbf{\Huge Image Tamper Detection}\\
+\vspace{0.5cm}
+\Large A Comprehensive Approach Using Deep Learning and Metadata Analysis}
+\author{}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\newpage
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+\subsection{Problem Statement}
+In the digital age, image manipulation and tampering have become increasingly sophisticated, posing significant challenges to image authenticity verification. With the advent of AI-generated images using Generative Adversarial Networks (GANs) and Diffusion models, distinguishing between authentic and manipulated images has become more complex. This project addresses the critical need for robust image tamper detection systems that can identify various forms of image manipulation, including:
+
+\begin{itemize}
+    \item AI-generated images (GAN and Diffusion models)
+    \item Traditional image editing and splicing
+    \item Metadata tampering
+\end{itemize}
+
+\subsection{Objectives}
+The primary objectives of this project are:
+
+\begin{enumerate}
+    \item To develop a multi-method approach for image tamper detection
+    \item To implement Error Level Analysis (ELA) combined with Convolutional Neural Networks for detecting image manipulation
+    \item To utilize EfficientNet-B4 for detecting AI-generated images
+    \item To analyze EXIF metadata for tampering indicators
+    \item To create an integrated system that combines all three methods for comprehensive analysis
+\end{enumerate}
+
+\subsection{Scope}
+This project focuses on:
+\begin{itemize}
+    \item Detection of AI-generated images (GAN and Diffusion models)
+    \item Detection of traditional image manipulation through ELA analysis
+    \item Metadata-based tampering detection
+    \item Development of a web-based application for real-time analysis
+\end{itemize}
+
+\section{Literature Review}
+
+\subsection{Error Level Analysis (ELA)}
+Error Level Analysis is a technique that identifies areas within an image that are at different compression levels. When an image is saved as JPEG, it is compressed to a specific quality level. If the image is edited and resaved, the edited regions will have a different error level compared to the original regions. ELA works by:
+
+\begin{enumerate}
+    \item Saving the image at a known JPEG quality level
+    \item Computing the difference between the original and resaved image
+    \item Enhancing the difference to highlight compression artifacts
+\end{enumerate}
+
+The mathematical foundation of ELA can be expressed as:
+\begin{equation}
+ELA(x,y) = \alpha \cdot |I_{original}(x,y) - I_{resaved}(x,y)|
+\end{equation}
+
+where $\alpha$ is a scaling factor to enhance the differences, and $I_{original}$ and $I_{resaved}$ are the original and resaved images respectively.
+
+\subsection{Convolutional Neural Networks}
+CNNs are particularly effective for image classification tasks due to their ability to automatically learn hierarchical features. The architecture typically consists of:
+
+\begin{itemize}
+    \item \textbf{Convolutional Layers}: Extract local features using learnable filters
+    \item \textbf{Pooling Layers}: Reduce spatial dimensions and computational complexity
+    \item \textbf{Fully Connected Layers}: Perform classification based on extracted features
+    \item \textbf{Dropout Layers}: Prevent overfitting by randomly deactivating neurons
+\end{itemize}
+
+\subsection{EfficientNet Architecture}
+EfficientNet is a family of models that achieve better accuracy and efficiency by scaling depth, width, and resolution uniformly. EfficientNet-B4, used in this project, balances performance and computational efficiency. The architecture uses:
+
+\begin{itemize}
+    \item Mobile Inverted Bottleneck Convolution (MBConv) blocks
+    \item Squeeze-and-Excitation optimization
+    \item Compound scaling method
+\end{itemize}
+
+\subsection{Metadata Analysis}
+EXIF (Exchangeable Image File Format) metadata contains information about the image capture conditions, including camera settings, timestamps, and software used. Inconsistencies in metadata can indicate tampering:
+
+\begin{itemize}
+    \item Missing or stripped EXIF data
+    \item Timestamp inconsistencies
+    \item Software indicators showing editing tools
+    \item GPS data absence in authentic-looking images
+\end{itemize}
+
+\section{Methodology}
+
+\subsection{System Architecture}
+The proposed system integrates three complementary detection methods:
+
+\begin{enumerate}
+    \item \textbf{AI-Generated Image Detection}: Uses EfficientNet-B4 to classify images as Real, GAN-generated, or Diffusion-generated
+    \item \textbf{CNN-ELA Detection}: Combines Error Level Analysis with CNN to detect traditional image manipulation
+    \item \textbf{Metadata Analysis}: Examines EXIF data for tampering indicators
+\end{enumerate}
+
+The final decision is made by combining the results from all three methods, providing a comprehensive assessment of image authenticity.
+
+\subsection{Method 1: AI-Generated Image Detection}
+
+\subsubsection{Architecture}
+The AI detection model uses EfficientNet-B4 as the base architecture with transfer learning:
+
+\begin{itemize}
+    \item \textbf{Base Model}: EfficientNet-B4 pre-trained on ImageNet
+    \item \textbf{Input Size}: 224×224×3
+    \item \textbf{Custom Classification Head}:
+    \begin{itemize}
+        \item Global Average Pooling 2D
+        \item Dense layer (512 units, ReLU activation)
+        \item Dropout (0.5)
+        \item Dense layer (256 units, ReLU activation)
+        \item Dropout (0.3)
+        \item Dense layer (3 units, Softmax activation) - Output: Real, GAN, Diffusion
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Preprocessing}
+\begin{lstlisting}[caption=Image Preprocessing for AI Detection]
+def load_and_preprocess_image(image_path, img_size=(224, 224)):
+    """Load and preprocess an image for the model."""
+    img = Image.open(image_path).convert('RGB')
+    img = img.resize(img_size)
+    img_array = np.array(img) / 255.0  # Normalize to [0, 1]
+    return img_array
+\end{lstlisting}
+
+\subsubsection{Model Training}
+The model is trained with:
+\begin{itemize}
+    \item \textbf{Optimizer}: Adam with learning rate 0.0001
+    \item \textbf{Loss Function}: Categorical Crossentropy
+    \item \textbf{Metrics}: Accuracy
+    \item \textbf{Callbacks}: ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+\end{itemize}
+
+\subsection{Method 2: CNN-ELA Detection}
+
+\subsubsection{Error Level Analysis Implementation}
+The ELA process converts images to highlight compression artifacts:
+
+\begin{lstlisting}[caption=ELA Conversion Function]
+def convert_to_ela_image(path, quality=90):
+    """
+    Convert image to Error Level Analysis (ELA) format.
+    
+    Args:
+        path: Path to image file
+        quality: JPEG quality for resaving
+    
+    Returns:
+        PIL Image object in ELA format
+    """
+    filename = path
+    resaved_filename = filename.split('.')[0] + '.resaved.jpg'
+    
+    # Open and convert to RGB
+    im = Image.open(filename).convert('RGB')
+    
+    # Save at specified quality
+    im.save(resaved_filename, 'JPEG', quality=quality)
+    resaved_im = Image.open(resaved_filename)
+    
+    # Compute difference
+    ela_im = ImageChops.difference(im, resaved_im)
+    
+    # Enhance differences
+    extrema = ela_im.getextrema()
+    max_diff = max([ex[1] for ex in extrema])
+    if max_diff == 0:
+        max_diff = 1
+    scale = 255.0 / max_diff
+    
+    ela_im = ImageEnhance.Brightness(ela_im).enhance(scale)
+    
+    # Clean up temporary file
+    if os.path.exists(resaved_filename):
+        os.remove(resaved_filename)
+    
+    return ela_im
+\end{lstlisting}
+
+\subsubsection{CNN Architecture}
+The CNN model for ELA-based detection has the following architecture:
+
+\begin{lstlisting}[caption=CNN Model Architecture for ELA Detection]
+model = Sequential()
+
+# First Convolutional Block
+model.add(Conv2D(filters=32, kernel_size=(5,5), padding='valid', 
+                 activation='relu', input_shape=(128,128,3)))
+# Output: (124, 124, 32)
+
+# Second Convolutional Block
+model.add(Conv2D(filters=32, kernel_size=(5,5), padding='valid', 
+                 activation='relu'))
+# Output: (120, 120, 32)
+
+# Pooling and Regularization
+model.add(MaxPool2D(pool_size=(2,2)))
+# Output: (60, 60, 32)
+model.add(Dropout(0.25))
+
+# Flatten for Dense Layers
+model.add(Flatten())
+# Output: (115200,)
+
+# Fully Connected Layers
+model.add(Dense(256, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(2, activation='softmax'))  # Real/Fake classification
+\end{lstlisting}
+
+\subsubsection{Model Parameters}
+\begin{itemize}
+    \item \textbf{Total Parameters}: ~29.5 million
+    \item \textbf{Optimizer}: RMSprop (learning rate: 0.0005)
+    \item \textbf{Loss Function}: Categorical Crossentropy
+    \item \textbf{Input Size}: 128×128×3 (ELA processed images)
+\end{itemize}
+
+\subsection{Method 3: Metadata Analysis}
+
+\subsubsection{EXIF Data Extraction}
+The metadata analysis module extracts and analyzes EXIF data:
+
+\begin{lstlisting}[caption=EXIF Data Extraction]
+def get_exif_data(image_path):
+    """Extract EXIF data from image using PIL."""
+    try:
+        with Image.open(image_path) as img:
+            exif_data = img._getexif()
+            if exif_data is not None:
+                exif = {}
+                for tag_id, value in exif_data.items():
+                    tag = TAGS.get(tag_id, tag_id)
+                    exif[tag] = value
+                return exif
+            else:
+                return {}
+    except Exception as e:
+        return {}
+\end{lstlisting}
+
+\subsubsection{Tampering Detection Logic}
+The system checks for various tampering indicators:
+
+\begin{enumerate}
+    \item \textbf{Missing EXIF Data}: Images stripped of metadata (+20 points)
+    \item \textbf{Missing Critical Timestamps}: No DateTimeOriginal (+15 points)
+    \item \textbf{Timestamp Inconsistencies}: Non-chronological timestamps (+25 points)
+    \item \textbf{File Modification After EXIF}: File modified after capture time (+10 points)
+    \item \textbf{Editing Software Indicators}: Software tags showing editors (+15 points)
+    \item \textbf{Generic Camera Information}: Missing or generic Make/Model (+10 points)
+\end{enumerate}
+
+The tampering score ranges from 0-100, with scores ≥50 indicating likely tampering.
+
+\section{Implementation}
+
+\subsection{Technology Stack}
+\begin{itemize}
+    \item \textbf{Programming Language}: Python 3.x
+    \item \textbf{Deep Learning Framework}: TensorFlow 2.13+, Keras 2.13+
+    \item \textbf{Image Processing}: PIL/Pillow 10.0+
+    \item \textbf{Web Framework}: Streamlit 1.28+
+    \item \textbf{Data Processing}: NumPy 1.24+, Pandas 2.0+
+    \item \textbf{Visualization}: Matplotlib 3.7+, Seaborn 0.12+
+\end{itemize}
+
+\subsection{System Integration}
+The main application integrates all three detection methods:
+
+\begin{lstlisting}[caption=Main Analysis Function]
+def analyze_image(image_path):
+    """Comprehensive image analysis using all three methods."""
+    results = {}
+    
+    # 1. AI-Generated Detection
+    try:
+        ai_results = analyze_ai_generated(image_path)
+        results['ai'] = ai_results
+    except Exception as e:
+        results['ai'] = None
+    
+    # 2. CNN-ELA Detection
+    try:
+        ela_results = analyze_ela(image_path)
+        results['ela'] = ela_results
+    except Exception as e:
+        results['ela'] = None
+    
+    # 3. Metadata Analysis
+    try:
+        metadata_results = analyze_metadata(image_path)
+        results['metadata'] = metadata_results
+    except Exception as e:
+        results['metadata'] = None
+    
+    return results
+\end{lstlisting}
+
+\subsection{Web Application}
+The Streamlit-based web application provides:
+
+\begin{itemize}
+    \item Image upload interface
+    \item Real-time analysis using all three methods
+    \item Visual results display with confidence scores
+    \item Comprehensive summary combining all methods
+    \item Model status indicators
+\end{itemize}
+
+\section{Results and Analysis}
+
+\subsection{Model Performance}
+
+\subsubsection{AI Detection Model}
+\begin{itemize}
+    \item \textbf{Classes}: Real, GAN, Diffusion
+    \item \textbf{Architecture}: EfficientNet-B4 with custom head
+    \item \textbf{Input Size}: 224×224×3
+    \item \textbf{Training}: Transfer learning with fine-tuning
+\end{itemize}
+
+\subsubsection{ELA-CNN Model}
+\begin{itemize}
+    \item \textbf{Accuracy}: 91.83\% (best epoch: 9)
+    \item \textbf{Convergence}: Achieved at epoch 9
+    \item \textbf{Classes}: Real, Fake
+    \item \textbf{Input}: ELA-processed images (128×128×3)
+\end{itemize}
+
+\subsection{Detection Capabilities}
+The integrated system can detect:
+
+\begin{enumerate}
+    \item \textbf{AI-Generated Images}: Distinguishes between real images, GAN-generated, and Diffusion-generated images
+    \item \textbf{Traditional Manipulation}: Identifies edited regions through ELA analysis
+    \item \textbf{Metadata Tampering}: Detects inconsistencies in EXIF data
+\end{enumerate}
+
+\subsection{Combined Analysis}
+The final verdict combines results from all three methods:
+\begin{itemize}
+    \item \textbf{Authentic}: Majority of methods indicate real image
+    \item \textbf{Fake/Manipulated}: Multiple methods indicate tampering
+    \item \textbf{Inconclusive}: Mixed results requiring further verification
+\end{itemize}
+
+\section{Code Implementation Details}
+
+\subsection{AI Detection Module}
+\begin{lstlisting}[caption=Complete AI Detection Implementation]
+"""
+AI-Generated Image Detection Module
+Uses EfficientNet-B4 model to detect AI-generated images
+"""
+
+import os
+import numpy as np
+from PIL import Image
+from keras.models import load_model
+
+# Configuration
+IMG_SIZE = (224, 224)
+CLASS_NAMES = ['Real', 'GAN', 'Diffusion']
+MODEL_PATH = 'models/ai_generated/ai_detector_best.keras'
+
+_model = None
+
+def load_model_if_needed():
+    """Load the AI detection model if not already loaded"""
+    global _model
+    if _model is None:
+        if os.path.exists(MODEL_PATH):
+            _model = load_model(MODEL_PATH)
+        else:
+            raise FileNotFoundError(f"Model not found at {MODEL_PATH}")
+    return _model
+
+def load_and_preprocess_image(image_path, img_size=IMG_SIZE):
+    """Load and preprocess an image for the model."""
+    img = Image.open(image_path).convert('RGB')
+    img = img.resize(img_size)
+    img_array = np.array(img) / 255.0
+    return img_array
+
+def analyze_ai_generated(image_path):
+    """Analyze an image for AI-generation."""
+    model = load_model_if_needed()
+    
+    # Load and preprocess
+    img_array = load_and_preprocess_image(image_path)
+    img_batch = np.expand_dims(img_array, axis=0)
+    
+    # Predict
+    predictions = model.predict(img_batch, verbose=0)
+    predicted_class_idx = np.argmax(predictions[0])
+    predicted_class = CLASS_NAMES[predicted_class_idx]
+    confidence = float(predictions[0][predicted_class_idx])
+    
+    # Get probabilities for all classes
+    probabilities = {
+        CLASS_NAMES[i]: float(predictions[0][i]) 
+        for i in range(len(CLASS_NAMES))
+    }
+    
+    return {
+        'predicted_class': predicted_class,
+        'confidence': confidence,
+        'probabilities': probabilities
+    }
+\end{lstlisting}
+
+\subsection{ELA Detection Module}
+\begin{lstlisting}[caption=Complete ELA Detection Implementation]
+"""
+CNN-ELA Detection Module
+Uses Error Level Analysis (ELA) + CNN to detect image manipulation
+"""
+
+import os
+import numpy as np
+from PIL import Image, ImageChops, ImageEnhance
+from keras.models import load_model
+
+IMG_SIZE = (128, 128)
+MODEL_PATH = 'models/fake_image_detector_model.keras'
+
+_model = None
+
+def load_model_if_needed():
+    """Load the ELA detection model if not already loaded"""
+    global _model
+    if _model is None:
+        if os.path.exists(MODEL_PATH):
+            _model = load_model(MODEL_PATH)
+        else:
+            raise FileNotFoundError(f"Model not found at {MODEL_PATH}")
+    return _model
+
+def convert_to_ela_image(path, quality=90):
+    """Convert image to Error Level Analysis (ELA) format."""
+    filename = path
+    resaved_filename = filename.split('.')[0] + '.resaved.jpg'
+    
+    im = Image.open(filename).convert('RGB')
+    im.save(resaved_filename, 'JPEG', quality=quality)
+    resaved_im = Image.open(resaved_filename)
+    
+    ela_im = ImageChops.difference(im, resaved_im)
+    
+    extrema = ela_im.getextrema()
+    max_diff = max([ex[1] for ex in extrema])
+    if max_diff == 0:
+        max_diff = 1
+    scale = 255.0 / max_diff
+    
+    ela_im = ImageEnhance.Brightness(ela_im).enhance(scale)
+    
+    if os.path.exists(resaved_filename):
+        os.remove(resaved_filename)
+    
+    return ela_im
+
+def analyze_ela(image_path):
+    """Analyze an image using CNN-ELA method."""
+    model = load_model_if_needed()
+    
+    # Convert to ELA and preprocess
+    ela_im = convert_to_ela_image(image_path, quality=90)
+    ela_im = ela_im.resize(IMG_SIZE)
+    
+    # Convert to array and normalize
+    feature = np.array(ela_im).flatten() / 255.0
+    feature = feature.reshape(1, IMG_SIZE[0], IMG_SIZE[1], 3)
+    
+    # Predict
+    predicted_array = model.predict(feature, verbose=0)
+    
+    # Determine prediction
+    if predicted_array[0][0] > predicted_array[0][1]:
+        prediction = 'Real'
+        confidence = float(predicted_array[0][0])
+    else:
+        prediction = 'Fake'
+        confidence = float(predicted_array[0][1])
+    
+    return {
+        'prediction': prediction,
+        'confidence': confidence,
+        'probabilities': {
+            'Real': float(predicted_array[0][0]),
+            'Fake': float(predicted_array[0][1])
+        }
+    }
+\end{lstlisting}
+
+\subsection{Metadata Analysis Module}
+\begin{lstlisting}[caption=Metadata Analysis Implementation (Key Functions)]
+"""
+Metadata Analysis Module
+Analyzes EXIF data to detect image tampering indicators
+"""
+
+from datetime import datetime
+from PIL import Image
+from PIL.ExifTags import TAGS
+
+def get_exif_data(image_path):
+    """Extract EXIF data from image using PIL."""
+    try:
+        with Image.open(image_path) as img:
+            exif_data = img._getexif()
+            if exif_data is not None:
+                exif = {}
+                for tag_id, value in exif_data.items():
+                    tag = TAGS.get(tag_id, tag_id)
+                    exif[tag] = value
+                return exif
+            else:
+                return {}
+    except Exception as e:
+        return {}
+
+def analyze_metadata(image_path):
+    """Comprehensive metadata analysis for a single image."""
+    result = {
+        'has_exif': False,
+        'exif_data': {},
+        'tampering_indicators': [],
+        'tampering_score': 0,
+        'metadata_completeness': 0,
+        'analysis_summary': {}
+    }
+    
+    # Get EXIF data
+    exif_pil = get_exif_data(image_path)
+    result['exif_data'] = exif_pil
+    result['has_exif'] = len(exif_pil) > 0
+    
+    # Calculate metadata completeness
+    expected_fields = ['DateTime', 'DateTimeOriginal', 'Make', 'Model', 'Software']
+    found_fields = sum(1 for field in expected_fields if field in result['exif_data'])
+    result['metadata_completeness'] = (found_fields / len(expected_fields)) * 100
+    
+    # Tampering Detection Logic
+    tampering_score = 0
+    indicators = []
+    
+    # Check for missing EXIF data
+    if not result['has_exif']:
+        tampering_score += 20
+        indicators.append("No EXIF data found")
+    
+    # Check for editing software
+    software = result['exif_data'].get('Software', '')
+    if software:
+        editing_software = ['photoshop', 'gimp', 'lightroom', 'paint', 'editor']
+        if any(term in str(software).lower() for term in editing_software):
+            tampering_score += 15
+            indicators.append(f"Editing software detected: {software}")
+    
+    result['tampering_score'] = min(tampering_score, 100)
+    result['tampering_indicators'] = indicators
+    
+    # Create summary
+    result['analysis_summary'] = {
+        'likely_tampered': tampering_score >= 50,
+        'tampering_confidence': 'High' if tampering_score >= 70 else 'Medium' if tampering_score >= 40 else 'Low'
+    }
+    
+    return result
+\end{lstlisting}
+
+\section{Theoretical Foundations}
+
+\subsection{Error Level Analysis Theory}
+ELA is based on the principle that JPEG compression introduces quantization errors. When an image is saved at quality $q$, the compression error $E$ can be expressed as:
+
+\begin{equation}
+E(x,y) = I_{original}(x,y) - I_{compressed}(x,y)
+\end{equation}
+
+For an authentic image, the error level is relatively uniform across the image. However, edited regions that have been resaved will exhibit different error levels, making them detectable through ELA.
+
+The enhanced ELA image is computed as:
+\begin{equation}
+ELA_{enhanced}(x,y) = \frac{255}{E_{max}} \cdot E(x,y)
+\end{equation}
+
+where $E_{max}$ is the maximum error value in the image.
+
+\subsection{Convolutional Neural Network Theory}
+CNNs learn hierarchical feature representations through convolution operations. The convolution operation for a 2D input is defined as:
+
+\begin{equation}
+(f * g)(i,j) = \sum_{m} \sum_{n} f(m,n) \cdot g(i-m, j-n)
+\end{equation}
+
+where $f$ is the input feature map and $g$ is the filter/kernel.
+
+The ReLU activation function introduces non-linearity:
+\begin{equation}
+\text{ReLU}(x) = \max(0, x)
+\end{equation}
+
+Max pooling reduces spatial dimensions:
+\begin{equation}
+\text{MaxPool}(x) = \max_{i \in \text{window}} x_i
+\end{equation}
+
+\subsection{EfficientNet Scaling}
+EfficientNet uses compound scaling to balance depth ($d$), width ($w$), and resolution ($r$):
+
+\begin{align}
+d &= \alpha^{\phi} \\
+w &= \beta^{\phi} \\
+r &= \gamma^{\phi}
+\end{align}
+
+subject to:
+\begin{equation}
+\alpha \cdot \beta^2 \cdot \gamma^2 \approx 2
+\end{equation}
+
+where $\phi$ is a user-specified coefficient that controls how many more resources are available for model scaling.
+
+\section{Conclusion}
+
+This project presents a comprehensive approach to image tamper detection by integrating three complementary methods:
+
+\begin{enumerate}
+    \item \textbf{AI-Generated Detection}: Uses EfficientNet-B4 to identify AI-generated images
+    \item \textbf{CNN-ELA Detection}: Combines Error Level Analysis with deep learning for manipulation detection
+    \item \textbf{Metadata Analysis}: Examines EXIF data for tampering indicators
+\end{enumerate}
+
+The integrated system provides robust detection capabilities, achieving 91.83\% accuracy on the ELA-CNN model and comprehensive analysis through the combination of all three methods. The web-based interface makes the system accessible for real-world applications.
+
+\subsection{Future Work}
+Potential improvements include:
+\begin{itemize}
+    \item Integration of additional detection methods
+    \item Real-time video tamper detection
+    \item Mobile application development
+    \item Enhanced metadata analysis with blockchain verification
+    \item Improved model accuracy through larger datasets
+\end{itemize}
+
+\section*{References}
+\begin{enumerate}
+    \item Tan, M., \& Le, Q. (2019). EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks. ICML.
+    \item Krawetz, N. (2007). A Picture's Worth: Digital Image Analysis and Forensics. Hacker Factor Solutions.
+    \item Goodfellow, I., et al. (2014). Generative Adversarial Nets. NIPS.
+    \item Ho, J., et al. (2020). Denoising Diffusion Probabilistic Models. NeurIPS.
+    \item LeCun, Y., et al. (1998). Gradient-based learning applied to document recognition. Proceedings of the IEEE.
+\end{enumerate}
+
+\end{document}
+
